@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>State of Crisis: An Articles of Confederation Survival Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        @keyframes subtle-bg {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 10% 10%; }
+            100% { background-position: 0% 0%; }
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fcf8e8; /* Parchment color */
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d2c8aa' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2-H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            animation: subtle-bg 30s linear infinite;
+            touch-action: manipulation;
+        }
+        .font-title {
+            font-family: 'Playfair Display', serif;
+        }
+        .game-container {
+            background-color: #fdf6e3;
+            border: 8px solid #a18a61;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2), inset 0 0 15px rgba(0,0,0,0.1);
+        }
+        .stability-bar-bg {
+            background-color: #e0e0e0;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+            background-image: linear-gradient(45deg, rgba(0,0,0,0.05) 25%, transparent 25%, transparent 50%, rgba(0,0,0,0.05) 50%, rgba(0,0,0,0.05) 75%, transparent 75%, transparent);
+            background-size: 20px 20px;
+        }
+        .stability-bar {
+            height: 100%;
+            transition: width 0.5s ease-in-out, background-color 0.5s ease-in-out;
+            border-radius: 0.5rem;
+            text-align: right;
+            padding-right: 8px;
+            color: white;
+            font-weight: bold;
+            font-size: 0.75rem;
+            line-height: 1.5rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        .choice-btn {
+            background-color: #34495e;
+            border-bottom: 4px solid #2c3e50;
+            transition: all 0.15s ease-in-out;
+        }
+        .choice-btn:hover {
+            transform: translateY(-2px);
+            border-bottom-width: 6px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+         .choice-btn:active {
+            transform: translateY(1px);
+            border-bottom-width: 2px;
+        }
+        .state-card {
+            background-color: #fcf8e8;
+            border: 2px solid #d2c8aa;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 8px 4px;
+            height: 110px;
+        }
+        .state-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            border-color: #a18a61;
+        }
+        .state-card.selected {
+            border-color: #a18a61;
+            box-shadow: 0 0 0 4px #a18a61;
+            transform: scale(1.05);
+        }
+        .state-abbr {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            color: #6b5b3b;
+            line-height: 1;
+        }
+        .modal {
+            transition: opacity 0.3s ease-in-out;
+        }
+        .modal-content {
+             transition: transform 0.3s ease-out;
+        }
+        .modal:not(.hidden) .modal-content {
+            transform: scale(1);
+        }
+        .modal.hidden .modal-content {
+            transform: scale(0.95);
+        }
+        .historical-note {
+            background-color: #f3efe6;
+            border-left: 4px solid #a18a61;
+            padding: 1rem;
+            border-radius: 0.25rem;
+        }
+        .text-input-area {
+            background-color: #fcf8e8;
+            border: 2px solid #d2c8aa;
+            resize: none;
+        }
+        .text-input-area:focus {
+            outline: none;
+            border-color: #a18a61;
+            box-shadow: 0 0 0 2px rgba(161, 138, 97, 0.5);
+        }
+        .icon {
+            width: 24px;
+            height: 24px;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen p-4">
+
+    <!-- Inline SVG Definitions -->
+    <svg width="0" height="0" class="absolute">
+        <defs>
+            <!-- UI Icons -->
+            <symbol id="icon-economic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></symbol>
+            <symbol id="icon-social" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></symbol>
+            <symbol id="icon-political" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></symbol>
+        </defs>
+    </svg>
+
+    <div id="game-container" class="w-full max-w-4xl mx-auto p-4 md:p-8 game-container">
+
+        <!-- Instructions Screen -->
+        <div id="instructions-screen">
+            <div class="text-center">
+                <h1 class="font-title text-5xl text-gray-900 mb-4">Welcome, Governor!</h1>
+                <p class="text-lg text-gray-700 mb-6">Your goal is to lead your state through the turbulent years of the Articles of Confederation. Your decisions will determine the fate of your people and the nation.</p>
+                <div class="historical-note text-left mb-8 space-y-4">
+                    <div>
+                        <h3 class="font-bold text-lg mb-2 text-center">Your Assignment & How to Play</h3>
+                        <p><strong>1. Govern Wisely, Not Quickly:</strong> Hasty, thoughtless decisions will be seen as chaotic leadership and will cause your administration to collapse, resulting in a low score.</p>
+                        <p><strong>2. Stay Active:</strong> You must play for a **minimum of 10 minutes** to receive credit. The session timer will automatically pause if you navigate away from this tab.</p>
+                        <p><strong>3. Submit Your Score:</strong> When you finish, take a screenshot of the entire final summary screen and upload it to the assignment on Canvas.</p>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg mb-2 text-center">Scoring</h3>
+                        <p>Your final **Governor's Legacy Score** is based on your overall performance: <br> <code class="bg-gray-200 p-1 rounded">(Average Final Stability x 10) + (Total Decisions x 5)</code></p>
+                    </div>
+                </div>
+                <button id="continue-to-start-btn" class="bg-blue-800 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-900 transition text-lg border-b-4 border-blue-900">Continue to Game</button>
+            </div>
+        </div>
+
+        <!-- Start Screen -->
+        <div id="start-screen" class="hidden">
+            <div class="text-center">
+                <h1 class="font-title text-5xl text-gray-900 mb-2">State of Crisis</h1>
+                <p class="text-lg text-gray-700 mb-6">An Articles of Confederation Survival Game</p>
+                <p class="mb-8 text-gray-600">You are the governor of a state under the **Articles of Confederation**, America's first, weak constitution. Under the Articles, the central government has **no power to tax, raise an army, or control trade between states.** You are on your own. Your goal is to survive until the problems become so severe that the states agree to meet in Philadelphia to create a new constitution.</p>
+                
+                <div class="mb-6 max-w-md mx-auto">
+                    <label for="player-names-input" class="block font-title text-2xl mb-2 text-gray-800">Enter Governor's Name(s)</label>
+                    <input type="text" id="player-names-input" class="w-full p-3 text-lg text-center rounded-md text-input-area" placeholder="e.g., John Adams or Adams & Jefferson">
+                    <p id="player-name-error" class="text-red-600 text-sm mt-1 hidden">Please enter at least one name to begin.</p>
+                </div>
+                
+                <h2 class="font-title text-3xl mb-4">Choose Your State:</h2>
+                <div id="state-selection" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 max-w-2xl mx-auto">
+                    <!-- State cards will be dynamically inserted here -->
+                </div>
+                 <button id="start-game-btn" class="mt-8 bg-blue-800 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-900 transition text-lg border-b-4 border-blue-900 opacity-50 cursor-not-allowed" disabled>Begin Governorship</button>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="hidden">
+            <div>
+                <!-- Header -->
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 border-b-2 border-gray-300 pb-4">
+                    <div>
+                        <h2 id="state-name" class="font-title text-3xl"></h2>
+                        <p id="current-year" class="text-lg text-gray-600"></p>
+                    </div>
+                    <div class="mt-2 sm:mt-0 text-right">
+                        <p class="text-sm">Total Session Time: <span id="timer">00:00</span></p>
+                        <div>
+                            <label class="text-sm font-semibold">Pressure for Convention:</label>
+                            <div class="w-32 bg-gray-300 rounded-full h-2.5 mt-1">
+                                <div id="progress-bar" class="bg-purple-800 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stability Bars -->
+                <div class="space-y-4 mb-6">
+                     <!-- Stability bars will be here -->
+                </div>
+
+                <!-- Event Display -->
+                <div id="event-display" class="bg-gray-50 p-6 rounded-lg border-2 border-dashed border-gray-300">
+                    <h3 id="event-title" class="font-title text-2xl mb-2"></h3>
+                    <p id="event-description" class="mb-4 text-gray-700"></p>
+                    <div id="choices" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Choice buttons will be inserted here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Justification Modal -->
+        <div id="justification-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 modal">
+            <div class="modal-content bg-white rounded-lg shadow-2xl p-8 max-w-lg w-full text-center game-container">
+                <h2 class="font-title text-3xl mb-2">Justify Your Decision</h2>
+                <p class="mb-4 text-gray-700">You have chosen to: "<span id="chosen-action" class="font-semibold"></span>"</p>
+                <p class="mb-4 text-gray-600">In your own words, why did you make this choice?</p>
+                <textarea id="justification-text" class="w-full h-24 p-2 rounded-md text-input-area" placeholder="Type your reasoning here..."></textarea>
+                <p id="justification-error" class="text-red-600 text-sm mt-1 hidden">Please provide a justification to continue.</p>
+                <div class="mt-4 flex justify-center gap-4">
+                    <button id="go-back-btn" class="bg-gray-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-gray-600 transition border-b-4 border-gray-700">Go Back</button>
+                    <button id="submit-justification-btn" class="bg-blue-800 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-900 transition border-b-4 border-blue-900">Submit</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feedback Modal -->
+        <div id="feedback-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 modal">
+            <div class="modal-content bg-white rounded-lg shadow-2xl p-8 max-w-lg w-full text-center game-container">
+                <h2 id="feedback-title" class="font-title text-3xl mb-4"></h2>
+                <p id="feedback-text" class="mb-4 text-gray-700"></p>
+                <p id="feedback-consequence" class="text-base text-gray-600 mb-6 font-semibold"></p>
+                <button id="next-event-btn" class="bg-blue-800 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-900 transition border-b-4 border-blue-900">Continue</button>
+            </div>
+        </div>
+
+        <!-- End Screen -->
+        <div id="end-screen" class="hidden">
+            <div class="text-center">
+                <div class="flex justify-between items-center bg-amber-100 p-4 rounded-lg border-2 border-amber-300 mb-4">
+                    <div>
+                        <p class="font-title text-2xl">Governor's Legacy Score</p>
+                        <p class="text-xs text-gray-600">(Average Final Stability x 10) + (Total Decisions x 5)</p>
+                    </div>
+                    <p id="final-score" class="font-title text-5xl text-purple-900"></p>
+                </div>
+
+                <div id="end-graphic-container" class="mb-4"></div>
+                <h1 id="end-title" class="font-title text-5xl mb-4"></h1>
+                <p class="text-xl text-gray-800 mb-2">A summary for Governor(s): <span id="end-player-names" class="font-semibold"></span></p>
+                <p class="text-lg text-gray-600 mb-2">Total Session Time: <span id="total-time" class="font-semibold"></span></p>
+                <p id="end-message" class="text-lg mb-6"></p>
+                
+                <div id="end-game-narrative" class="mb-6 p-4 bg-amber-100 border border-amber-300 rounded-lg text-left max-h-60 overflow-y-auto">
+                    <!-- Narrative will be generated here -->
+                </div>
+
+                <div class="historical-note text-left max-h-60 overflow-y-auto">
+                    <h3 class="font-title text-2xl mb-4 text-center">Log of Your Decisions</h3>
+                    <ul id="choices-summary" class="space-y-4 text-gray-800">
+                       <!-- Summary of choices will be listed here -->
+                    </ul>
+                </div>
+                
+                <div class="mt-6 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800">
+                    <p class="font-bold">Assignment Credit</p>
+                    <p class="text-sm">To receive credit, take a screenshot of this page and upload it to Canvas.</p>
+                     <div class="mt-2 p-2 bg-gray-200 border border-gray-400 rounded-lg text-xs text-gray-700">
+                        <p class="font-semibold">How to screenshot on a Chromebook:</p>
+                        <p>Press the <kbd class="px-1 py-0.5 font-sans text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-md">Ctrl</kbd> + <kbd class="px-1 py-0.5 font-sans text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-md">Show windows</kbd> keys. The Show windows key is above the number 6 key.</p>
+                    </div>
+                </div>
+
+                <button id="play-again-btn" class="mt-8 bg-blue-800 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-900 transition text-lg border-b-4 border-blue-900">Play Again</button>
+            </div>
+        </div>
+        
+        <!-- Pause Screen -->
+        <div id="pause-screen" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 modal">
+            <div class="text-center text-white">
+                <h2 class="font-title text-5xl mb-4">Game Paused</h2>
+                <p class="text-xl mb-6">Your session timer has been stopped.</p>
+                <button id="resume-game-btn" class="bg-green-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition text-lg border-b-4 border-green-800">Resume Game</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // DOM Elements
+        const instructionsScreen = document.getElementById('instructions-screen');
+        const continueToStartBtn = document.getElementById('continue-to-start-btn');
+        const startGameBtn = document.getElementById('start-game-btn');
+        let selectedStateCard = null;
+        const startScreen = document.getElementById('start-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const endScreen = document.getElementById('end-screen');
+        const pauseScreen = document.getElementById('pause-screen');
+        const resumeGameBtn = document.getElementById('resume-game-btn');
+        const stateSelectionContainer = document.getElementById('state-selection');
+        const stateNameEl = document.getElementById('state-name');
+        const currentYearEl = document.getElementById('current-year');
+        const timerEl = document.getElementById('timer');
+        const progressBarEl = document.getElementById('progress-bar');
+        const eventTitleEl = document.getElementById('event-title');
+        const eventDescriptionEl = document.getElementById('event-description');
+        const choicesEl = document.getElementById('choices');
+        const justificationModal = document.getElementById('justification-modal');
+        const chosenActionEl = document.getElementById('chosen-action');
+        const justificationTextEl = document.getElementById('justification-text');
+        const submitJustificationBtn = document.getElementById('submit-justification-btn');
+        const justificationError = document.getElementById('justification-error');
+        const goBackBtn = document.getElementById('go-back-btn');
+        const feedbackModal = document.getElementById('feedback-modal');
+        const feedbackTitleEl = document.getElementById('feedback-title');
+        const feedbackTextEl = document.getElementById('feedback-text');
+        const feedbackConsequenceEl = document.getElementById('feedback-consequence');
+        const nextEventBtn = document.getElementById('next-event-btn');
+        const endTitleEl = document.getElementById('end-title');
+        const endPlayerNamesEl = document.getElementById('end-player-names');
+        const totalTimeEl = document.getElementById('total-time');
+        const endMessageEl = document.getElementById('end-message');
+        const choicesSummaryEl = document.getElementById('choices-summary');
+        const endGameNarrativeEl = document.getElementById('end-game-narrative');
+        const endGraphicContainer = document.getElementById('end-graphic-container');
+        const finalScoreEl = document.getElementById('final-score');
+        const playAgainBtn = document.getElementById('play-again-btn');
+
+        // Game State
+        let gameState = {};
+        let sessionData = {
+            startTime: null,
+            totalElapsedSeconds: 0,
+            timerInterval: null,
+            isPaused: false
+        };
+        const MINIMUM_DECISIONS = 12;
+        const MINIMUM_PLAY_TIME_SECONDS = 600; // 10 minutes
+        const BURNOUT_DECISION_COUNT = 5;
+        const BURNOUT_AVERAGE_TIME = 20; // seconds
+        
+        // Data
+        const statesData = {
+            'Massachusetts': { name: 'Massachusetts', abbr: 'MA', description: 'Burdened by war debt, your farmers are restless.' },
+            'Virginia': { name: 'Virginia', abbr: 'VA', description: 'Navigating conflicts over trade and western land claims.' },
+            'New York': { name: 'New York', abbr: 'NY', description: 'A hub of commerce, engaged in bitter tariff disputes.' },
+            'Rhode Island': { name: 'Rhode Island', abbr: 'RI', description: 'Printing vast amounts of paper money, causing chaos.' },
+            'South Carolina': { name: 'South Carolina', abbr: 'SC', description: 'Reliant on agricultural exports and foreign trade.' },
+            'Pennsylvania': { name: 'Pennsylvania', abbr: 'PA', description: 'Struggling with internal political factions.' },
+        };
+
+        const initialGameState = {
+            'Massachusetts': { economic: 35, social: 30, political: 50, debt: 85, unrest: 50, tension: 20 },
+            'Virginia': { economic: 60, social: 65, political: 60, debt: 50, unrest: 20, tension: 65 },
+            'New York': { economic: 55, social: 60, political: 45, debt: 50, unrest: 15, tension: 80 },
+            'Rhode Island': { economic: 30, social: 40, political: 30, debt: 50, unrest: 40, tension: 60 },
+            'South Carolina': { economic: 45, social: 50, political: 40, debt: 75, unrest: 15, tension: 15 },
+            'Pennsylvania': { economic: 50, social: 50, political: 55, debt: 65, unrest: 30, tension: 40 },
+        };
+        
+        // --- EXPANDED EVENT POOL with branching logic ---
+        const eventPool = [
+            // Generic Events
+            { id: 'E01_CONGRESS_FUNDS', title: "Congress Requests Funds", description: "The Continental Congress, which serves as the national government, is asking your state for money to pay its Revolutionary War debts. Your state treasury is nearly empty.", choices: [ { text: "Contribute your state's full share.", emoji: "💰", mods: { economic: -15, political: +10, debt: -15, crisis: 8 }, feedback: "You upheld national honor, but your state is now verging on bankruptcy.", flag: 'paid_debt' }, { text: "Contribute a small portion.", emoji: "🤏", mods: { economic: -8, political: -5, debt: -5, crisis: 6 }, feedback: "A token gesture. The national debt remains.", flag: 'paid_some_debt' }, { text: "Refuse to pay. The national government can't force you.", emoji: "🚫", mods: { economic: +5, social: +5, political: -15, crisis: 5 }, feedback: "Your treasury is saved, but the nation's credit is damaged.", flag: 'refused_debt' } ] },
+            { id: 'E02_VETERANS_PAY', title: "Unpaid Veterans Protest", description: "Unpaid Revolutionary War veterans are protesting outside the statehouse, demanding the back-pay they were promised.", choices: [ { text: "Pay them with new taxes.", emoji: "🪙", mods: { economic: -10, social: -15, debt: -10, unrest: +15, crisis: 7 }, feedback: "The veterans are paid, but the general populace is outraged by another tax." }, { text: "Promise payment with western land grants.", emoji: "📜", mods: { economic: +5, social: +10, debt: -10, unrest: -5, crisis: 6 }, feedback: "The veterans accept the land, easing the immediate crisis.", flag: 'used_land_grants' } ] },
+            { id: 'E03_FOREIGN_THREATS', title: "British Forts on the Frontier", description: "British soldiers still occupy forts in the western territories, in violation of the peace treaty. The national government is too weak to force them out.", choices: [ { text: "Demand Congress take action.", emoji: "🗣️", mods: { political: -10, crisis: 5 }, feedback: "Congress agrees the British must leave, but with no power to raise an army, its demands are ignored.", flag: 'appealed_to_congress' }, { text: "Raise and fund your own state militia.", emoji: "🛡️", mods: { economic: -15, social: -10, political: +5, debt: +15, crisis: 8 }, feedback: "Your state takes on a heavy financial burden to defend its own frontier.", flag: 'raised_militia' } ] },
+            { id: 'E04_SPAIN_MISSISSIPPI', title: "Spain Closes the Mississippi", description: "Spain has closed the port of New Orleans to American trade. Your western farmers, who need the river to sell their crops, are furious.", choices: [ { text: "Demand Congress negotiate a treaty to reopen the river.", emoji: "🏛️", mods: { political: -5, crisis: 6 }, feedback: "Congress attempts to negotiate, but with no military to back them up, Spain offers a terrible deal that is rejected."}, { text: "Fund a new road over the mountains for your farmers.", emoji: "🛣️", mods: { economic: -20, social: +5, debt: +15, crisis: 7 }, feedback: "Building the road is incredibly expensive, but it provides a new, albeit inefficient, route to eastern markets."} ] },
+            { id: 'E05_BARBARY_PIRATES', title: "Barbary Pirates", description: "Barbary pirates are seizing your state's merchant ships and holding sailors for ransom. The national government has no navy to protect them.", choices: [ { text: "Pay the tribute from your state treasury.", emoji: "💸", mods: { economic: -15, debt: +10, crisis: 7 }, feedback: "Your ships are safe for now, but this costly solution encourages more demands from the pirates."}, { text: "Urge Congress to build a national navy.", emoji: "⚓", mods: { political: -5, crisis: 6 }, feedback: "Congress agrees a navy is needed but cannot force states to contribute funds. The proposal fails."} ] },
+            { id: 'E06_LOYALIST_PROPERTY', title: "Loyalist Property Dispute", description: "The Treaty of Paris requires you to return property seized from Loyalists during the war. Many of your citizens, some of them veterans, now live on that land.", choices: [ { text: "Uphold the treaty and evict your citizens.", emoji: "⚖️", mods: { social: -20, political: +15, unrest: +15, crisis: 9 }, feedback: "You maintain good relations with Britain, but at the cost of your own citizens' happiness and stability."}, { text: "Ignore the treaty and protect your citizens.", emoji: "✊", mods: { social: +15, political: -15, crisis: 7 }, feedback: "Your citizens are overjoyed, but Great Britain accuses America of violating the treaty, damaging foreign relations."} ] },
+            { id: 'E07_AMENDMENT', title: "The Impost Amendment", description: "A proposal is circulating to amend the Articles to allow Congress a 5% tax on imports. This could solve the national debt, but it requires a unanimous vote of all 13 states.", choices: [ { text: "Vote in favor and lobby other states.", emoji: "🇺🇸", mods: { political: +10, crisis: 6 }, feedback: "You argue for a stronger nation, but one state vetoes the proposal. The nation stays broke.", flag: 'pro_impost' }, { text: "Vote against it to protect state sovereignty.", emoji: "⛔", mods: { political: -10, crisis: 8 }, feedback: "You protect your state from a national tax, but contribute to the national government's paralysis.", flag: 'anti_impost' } ] },
+            
+            // State-Specific Events
+            { id: 'S_MA_SHAYS', title: "The Courts are Closed!", description: "Armed farmers, led by Daniel Shays, have forcibly closed the debtor courts in the western part of your state. They are in open rebellion against your government.", state: 'Massachusetts', conditions: (state) => state.unrest > 60, choices: [ { text: "Raise a private army funded by wealthy merchants.", emoji: "💰", mods: { social: -15, political: +10, unrest: -20, debt: +10, crisis: 12 }, feedback: "The merchants agree, and the army is raised. You've restored order, but at the cost of appearing to favor the rich.", flag: 'crushed_rebellion' }, { text: "Offer amnesty and hear the farmers' grievances.", emoji: "🕊️", mods: { social: +15, political: -15, unrest: -15, debt: -5, crisis: 7 }, feedback: "The rebellion subsides peacefully, but you are accused of caving to mob rule.", flag: 'mediated_rebellion' } ] },
+            { id: 'S_NY_TARIFFS', title: "The New York Problem", description: "Your state's location gives you control over most of the trade for New Jersey and Connecticut. Levying taxes on their goods is a massive source of revenue.", state: 'New York', choices: [ { text: "Maintain the tariffs; they are vital to your state.", emoji: "💰", mods: { economic: +15, political: -10, tension: +20, crisis: 9}, feedback: "Your treasury swells, but your neighbors are furious and threaten retaliation.", flag: 'started_trade_war' }, { text: "Reduce the tariffs to appease your neighbors.", emoji: "🤝", mods: { economic: -10, political: +10, tension: -15, crisis: 6}, feedback: "Relations with your neighbors improve, but your state loses a key source of income."} ] },
+            { id: 'S_RI_PAPER_MONEY', title: "The Paper Money Fire", description: "Your state legislature, dominated by indebted farmers, has passed a law to print a massive amount of new paper money to make it easier to pay off debts.", state: 'Rhode Island', choices: [ { text: "Approve the law and embrace debtor relief.", emoji: "💸", mods: { economic: -25, social: +20, unrest: -20, crisis: 11 }, feedback: "Debtors are overjoyed, but the currency's value plummets, leading to hyperinflation.", flag: 'printed_money' }, { text: "Veto the law to protect the currency.", emoji: "✋", mods: { economic: +10, social: -20, unrest: +20, crisis: 8 }, feedback: "You protect the currency's value, but now face a massive backlash from the debtor majority." } ] },
+            { id: 'S_VA_POTOMAC', title: "The Potomac Compact", description: "Maryland and Virginia both claim control over the Potomac River, a vital waterway for trade. The dispute is escalating.", state: 'Virginia', choices: [ { text: "Send delegates to meet with Maryland at Mount Vernon.", emoji: "🤝", mods: { economic: +10, political: +10, tension: -15, crisis: 5 }, feedback: "The meeting is a success! You and Maryland agree to share the river, setting a precedent for interstate cooperation."}, { text: "Assert your state's claim by force.", emoji: "⚔️", mods: { economic: -10, political: -15, tension: +25, crisis: 10 }, feedback: "Your militia seizes control, but this aggressive act pushes the two states to the brink of war."} ] },
+            { id: 'S_PA_FACTIONS', title: "Constitutionalists vs. Radicals", description: "Your state politics are bitterly divided between the 'Constitutionalist' faction (merchants, bankers) and the 'Radical' faction (farmers, artisans). A key vote on the state bank is approaching.", state: 'Pennsylvania', choices: [ { text: "Side with the Constitutionalists and support the bank.", emoji: "🏦", mods: { economic: +10, social: -10, political: +5, unrest: +10, crisis: 7}, feedback: "The bank is established, stabilizing the economy, but the Radicals accuse you of favoring the elite."}, { text: "Side with the Radicals and oppose the bank.", emoji: "🌾", mods: { economic: -10, social: +10, political: -5, unrest: -10, crisis: 7}, feedback: "The Radicals are pleased, but without a central bank, your state's finances remain chaotic."} ] },
+            { id: 'S_SC_DEBT', title: "Planters' Debts", description: "Many wealthy planters in your state owe massive debts to British merchants from before the war. The British are now demanding payment.", state: 'South Carolina', choices: [ { text: "Pass a law forgiving the planters' debts.", emoji: "📜", mods: { economic: -10, social: +15, political: -15, crisis: 9}, feedback: "The powerful planter class is grateful, but this violation of contracts damages your state's reputation for trade."}, { text: "Allow British creditors to sue in your courts.", emoji: "⚖️", mods: { economic: +10, social: -15, political: +10, unrest: +15, crisis: 6}, feedback: "Your state is seen as reliable, but the planters are furious and their political support evaporates."} ] },
+            
+            // Branching Consequences
+            { id: 'B01_COUNTERFEITING', title: "Counterfeiting Epidemic", description: "With so much paper money in circulation, counterfeit bills are flooding the market, destroying public trust in the currency.", conditions: (state) => state.flags.has('printed_money'), choices: [ { text: "Establish a state bank to control the currency.", emoji: "🏦", mods: { economic: +15, political: +10, debt: +5, crisis: 7 }, feedback: "A state bank helps stabilize the currency but angers radical farmers who see it as a tool of the wealthy."}, { text: "Announce a recall of all paper money.", emoji: "🔥", mods: { economic: -20, social: -20, unrest: +20, crisis: 10 }, feedback: "You wipe out the counterfeit bills, but also the savings of many honest citizens." } ] },
+            { id: 'B02_MILITIA_MUTINY', title: "Militia Mutiny", description: "Your state militia, sympathetic to the farmers you sent them to suppress, are refusing orders. Some are even joining the rebels!", conditions: (state) => state.flags.has('crushed_rebellion') && state.unrest > 40, choices: [ { text: "Hire foreign mercenaries.", emoji: " mercenaries", mods: { economic: -25, social: -15, debt: +20, crisis: 10 }, feedback: "The mercenaries are effective, but hated by all your citizens." }, { text: "Offer a general pardon to all rebels and militia.", emoji: "🕊️", mods: { social: +20, political: -15, unrest: -20, crisis: 6 }, feedback: "The crisis is averted, but your authority is severely weakened." } ] },
+            { id: 'C03_TOTAL_CHAOS', title: "The Union Falters", description: "Shays' Rebellion has broken out in Massachusetts, and leaders across the confederation are calling for a convention to reform the government. Your own state is deeply unstable.", conditions: (state) => state.nationalCrisisLevel > 80, choices: [ { text: "Send delegates to the convention to strengthen the nation.", emoji: "🇺🇸", mods: { political: +20, crisis: 20 }, feedback: "You have chosen to be part of the solution.", flag: 'pro_convention' }, { text: "Refuse to participate, guarding state sovereignty.", emoji: "⛔", mods: { political: -20, tension: +10, crisis: 10 }, feedback: "You stand for state's rights, but risk being left behind.", flag: 'anti_convention' } ] }
+        ];
+        
+        // --- GAME LOGIC ---
+        
+        function init() {
+            Object.values(statesData).forEach(state => {
+                const card = document.createElement('div');
+                card.className = 'state-card rounded-lg text-center';
+                card.dataset.stateName = state.name;
+                card.innerHTML = `<div class="state-abbr">${state.abbr}</div><h3 class="font-bold text-xs leading-tight mt-2">${state.name}</h3><p class="text-xs text-gray-500 mt-1">${state.description}</p>`;
+                card.onclick = () => selectState(card);
+                stateSelectionContainer.appendChild(card);
+            });
+
+            startGameBtn.onclick = () => {
+                if (selectedStateCard) {
+                    const playerNamesInput = document.getElementById('player-names-input');
+                    const playerNameError = document.getElementById('player-name-error');
+                    const playerNames = playerNamesInput.value.trim();
+                    if (playerNames === '') {
+                        playerNameError.classList.remove('hidden');
+                        return;
+                    }
+                    playerNameError.classList.add('hidden');
+                    startGame(selectedStateCard.dataset.stateName, playerNames);
+                }
+            };
+
+            goBackBtn.onclick = () => {
+                justificationModal.classList.add('hidden');
+            };
+
+            continueToStartBtn.onclick = () => {
+                instructionsScreen.classList.add('hidden');
+                startScreen.classList.remove('hidden');
+            }
+
+            playAgainBtn.onclick = () => {
+                resetGame();
+            };
+            
+            resumeGameBtn.onclick = () => {
+                sessionData.isPaused = false;
+                pauseScreen.classList.add('hidden');
+            };
+
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+        }
+
+        function selectState(card) {
+            if (selectedStateCard) {
+                selectedStateCard.classList.remove('selected');
+            }
+            selectedStateCard = card;
+            selectedStateCard.classList.add('selected');
+            startGameBtn.disabled = false;
+            startGameBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        function startGame(selectedStateName, playerNames) {
+            if (!sessionData.startTime) {
+                sessionData.startTime = new Date();
+                sessionData.totalElapsedSeconds = 0;
+            }
+
+            gameState = {
+                playerNames: playerNames,
+                stateName: selectedStateName,
+                ...initialGameState[selectedStateName],
+                year: 1785,
+                eventHistory: [],
+                flags: new Set(),
+                nationalCrisisLevel: 0,
+                decisionTimestamps: [],
+                availableEvents: shuffleArray([...eventPool]),
+            };
+            stateNameEl.textContent = gameState.stateName;
+            currentYearEl.textContent = `Year: ${gameState.year}`;
+
+            const stabilityContainer = document.querySelector('#game-screen .space-y-4');
+            stabilityContainer.innerHTML = `<div><label class="font-semibold text-gray-700"><svg class="icon"><use href="#icon-economic"></use></svg>Economic Stability</label><div class="stability-bar-bg h-6"><div id="economic-bar" class="stability-bar"></div></div></div><div><label class="font-semibold text-gray-700"><svg class="icon"><use href="#icon-social"></use></svg>Social Stability</label><div class="stability-bar-bg h-6"><div id="social-bar" class="stability-bar"></div></div></div><div><label class="font-semibold text-gray-700"><svg class="icon"><use href="#icon-political"></use></svg>Political Stability</label><div class="stability-bar-bg h-6"><div id="political-bar" class="stability-bar"></div></div></div>`;
+            startScreen.classList.add('hidden');
+            endScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            updateUI();
+            selectAndDisplayNextEvent();
+            startTimer();
+        }
+
+        function resetGame() {
+            endScreen.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+        }
+
+        function startTimer() {
+            if (sessionData.timerInterval) clearInterval(sessionData.timerInterval);
+            let lastTick = Date.now();
+            sessionData.timerInterval = setInterval(() => {
+                if (!sessionData.isPaused) {
+                    sessionData.totalElapsedSeconds += (Date.now() - lastTick) / 1000;
+                    lastTick = Date.now();
+                    const minutes = String(Math.floor(sessionData.totalElapsedSeconds / 60)).padStart(2, '0');
+                    const seconds = String(Math.floor(sessionData.totalElapsedSeconds % 60)).padStart(2, '0');
+                    timerEl.textContent = `${minutes}:${seconds}`;
+                } else {
+                    lastTick = Date.now(); // Reset tick time when paused
+                }
+            }, 1000);
+        }
+        
+        function stopTimer() { clearInterval(sessionData.timerInterval); }
+
+        function handleVisibilityChange() {
+            if (document.visibilityState === 'hidden') {
+                sessionData.isPaused = true;
+                pauseScreen.classList.remove('hidden');
+            }
+        }
+
+        function updateUI() {
+            updateBar(document.getElementById('economic-bar'), gameState.economic);
+            updateBar(document.getElementById('social-bar'), gameState.social);
+            updateBar(document.getElementById('political-bar'), gameState.political);
+            progressBarEl.style.width = `${Math.min(100, gameState.nationalCrisisLevel)}%`;
+        }
+        
+        function getBarColor(value) {
+            if (value > 65) return '#27ae60';
+            if (value > 30) return '#f39c12';
+            return '#c0392b';
+        }
+
+        function updateBar(barElement, value) {
+            if (!barElement) return;
+            const clampedValue = Math.max(0, Math.min(100, value));
+            barElement.style.width = `${clampedValue}%`;
+            barElement.style.backgroundColor = getBarColor(clampedValue);
+            barElement.textContent = `${clampedValue}%`;
+        }
+        
+        function selectAndDisplayNextEvent() {
+            if (gameState.nationalCrisisLevel >= 100 && gameState.eventHistory.length >= MINIMUM_DECISIONS && sessionData.totalElapsedSeconds >= MINIMUM_PLAY_TIME_SECONDS) {
+                endGame(true);
+                return;
+            }
+
+            const seenEventIds = new Set(gameState.eventHistory.map(e => e.id));
+            let nextEvent = null;
+
+            // Find the next available, valid event from the shuffled list
+            for (let i = 0; i < gameState.availableEvents.length; i++) {
+                const event = gameState.availableEvents[i];
+                if (!seenEventIds.has(event.id)) { // If we haven't seen it
+                    const isWrongState = event.state && event.state !== gameState.stateName;
+                    const conditionsMet = !event.conditions || event.conditions(gameState);
+                    
+                    if (!isWrongState && conditionsMet) {
+                        nextEvent = event;
+                        break;
+                    }
+                }
+            }
+            
+            // If still no event, trigger stalemate
+            if (!nextEvent) {
+                nextEvent = { id: 'FINAL_STALEMATE', title: "A Nation Adrift", description: "Years of turmoil have passed. The nation is deadlocked, unable to solve its problems under the current system. While your state remains stable for now, a choice must be made about the future.", choices: [ { text: "Call for a convention to forge a new, stronger government.", emoji: "🇺🇸", mods: { crisis: 101 }, flag: 'pro_convention' }, { text: "Insist on the sovereignty of the states and refuse changes.", emoji: "⛔", mods: { crisis: 101 }, flag: 'anti_convention' } ] };
+            }
+            
+            gameState.currentEvent = nextEvent;
+            eventTitleEl.textContent = nextEvent.title;
+            eventDescriptionEl.textContent = nextEvent.description;
+            choicesEl.innerHTML = '';
+            nextEvent.choices.forEach((choice, index) => {
+                const button = document.createElement('button');
+                button.className = 'choice-btn text-white p-4 rounded-lg text-left flex items-center';
+                button.innerHTML = `<span class="text-2xl mr-3">${choice.emoji || ''}</span> <span class="flex-1">${choice.text}</span>`;
+                button.onclick = () => makeChoice(index);
+                choicesEl.appendChild(button);
+            });
+        }
+
+        function makeChoice(choiceIndex) {
+            const choice = gameState.currentEvent.choices[choiceIndex];
+            chosenActionEl.textContent = choice.text;
+            justificationTextEl.value = '';
+            justificationError.classList.add('hidden');
+            justificationModal.classList.remove('hidden');
+            submitJustificationBtn.onclick = () => {
+                const justification = justificationTextEl.value.trim();
+                if (justification === '') {
+                    justificationError.classList.remove('hidden');
+                    return;
+                }
+                justificationModal.classList.add('hidden');
+                processChoice(choice, justification);
+            };
+        }
+
+        function processChoice(choice, justification) {
+            gameState.decisionTimestamps.push(Date.now());
+            gameState.eventHistory.push({ id: gameState.currentEvent.id, title: gameState.currentEvent.title, choiceText: choice.text, justification: justification });
+
+            let consequenceText = [];
+            for (const key in choice.mods) {
+                const change = choice.mods[key];
+                if (key === 'crisis') {
+                    gameState.nationalCrisisLevel += change;
+                    consequenceText.push(`➡️ Pressure for Convention +${change}`);
+                } else {
+                    gameState[key] += change;
+                }
+                if (['economic', 'social', 'political'].includes(key)) {
+                    const sign = change > 0 ? '⬆️ +' : '⬇️ ';
+                    consequenceText.push(`${key.charAt(0).toUpperCase() + key.slice(1)} ${sign}${Math.abs(change)}`);
+                }
+            }
+            if (choice.flag) gameState.flags.add(choice.flag);
+            
+            updateUI();
+
+            feedbackTitleEl.textContent = "Decision Made";
+            feedbackTextEl.textContent = choice.feedback;
+            feedbackConsequenceEl.innerHTML = consequenceText.length > 0 ? `Effect of Your Decision: <br>${consequenceText.join('<br>')}` : '';
+            feedbackModal.classList.remove('hidden');
+            
+            nextEventBtn.onclick = () => {
+                feedbackModal.classList.add('hidden');
+                
+                if (gameState.economic <= 0 || gameState.social <= 0 || gameState.political <= 0) {
+                    endGame(false);
+                    return;
+                }
+                
+                if (gameState.eventHistory.length % 4 === 0 && gameState.year < 1787) {
+                    gameState.year++;
+                    currentYearEl.textContent = `Year: ${gameState.year}`;
+                }
+
+                // Check for Burnout
+                if (gameState.decisionTimestamps.length >= BURNOUT_DECISION_COUNT) {
+                    const lastFiveDecisions = gameState.decisionTimestamps.slice(-BURNOUT_DECISION_COUNT);
+                    const timeDiffs = [];
+                    for (let i = 1; i < lastFiveDecisions.length; i++) {
+                        timeDiffs.push((lastFiveDecisions[i] - lastFiveDecisions[i-1]) / 1000);
+                    }
+                    const avgTime = timeDiffs.reduce((a, b) => a + b, 0) / timeDiffs.length;
+                    if (avgTime < BURNOUT_AVERAGE_TIME) {
+                        endGame(false, 'burnout');
+                        return;
+                    }
+                }
+                
+                selectAndDisplayNextEvent();
+            };
+        }
+        
+        function generateEndgameNarrative() {
+             let narrative = `<h3 class="font-title text-xl mb-2 text-center">The Story of Your Governorship</h3>`;
+            let story = [];
+            
+            if(gameState.flags.has('crushed_rebellion')) {
+                story.push({
+                    player: "Your decision to use military force against the rebelling farmers became a defining moment. While it restored order, it created deep resentment that simmered beneath the surface, showcasing the deep class divisions.",
+                    history: "This mirrors the real-world outcome of <strong>Shays' Rebellion in Massachusetts</strong>. The government's harsh response terrified national leaders and proved the Articles were too weak to handle internal unrest, becoming a major catalyst for the Constitutional Convention."
+                });
+            }
+            if(gameState.flags.has('printed_money')) {
+                story.push({
+                    player: "Faced with angry debtors, you turned to the printing press for a solution. This provided short-term relief but ultimately devalued your state's currency, hurting merchants and creating economic chaos.",
+                    history: "Your path was similar to that of <strong>Rhode Island</strong>, which issued so much paper money it became nearly worthless. Their radical pro-debtor laws isolated them from other states and made them a symbol of the dangers of unchecked state power."
+                });
+            }
+            if(gameState.flags.has('started_trade_war')) {
+                story.push({
+                    player: "You responded to hostile tariffs from neighbors with aggressive policies of your own. This created a bitter trade war, isolating your state and grinding interstate commerce to a halt.",
+                    history: "This reflects the destructive economic conflicts between the states, particularly the one between <strong>New York</strong>, which taxed goods from its neighbors, and suffered greatly, demonstrating the need for federal oversight of commerce."
+                });
+            }
+            if(gameState.flags.has('refused_debt')) {
+                story.push({
+                    player: "You prioritized your state's immediate finances by refusing to pay your share of the national war debt. This kept your treasury solvent but severely damaged the nation's credit and standing in the world.",
+                    history: "This was a common problem. Because Congress couldn't force states to pay, the national debt went unpaid, making the United States appear weak and unreliable to foreign powers like France and Britain."
+                });
+            }
+
+            if(story.length === 0) {
+                 story.push({
+                    player: "Your governorship was marked by moderation and careful compromise. You navigated the treacherous political landscape without resorting to radical measures, keeping your state stable in a time of national crisis.",
+                    history: "Leaders in states like <strong>Pennsylvania</strong> often sought compromise. However, even their stability was threatened by the chaos in neighboring states, proving that no state could truly prosper alone under such a weak central government."
+                });
+            }
+            
+            story.forEach(s => {
+                narrative += `<p class="mb-2 text-gray-800">${s.player}</p><p class="text-sm text-gray-600 mb-4 pl-4 border-l-2 border-gray-400"><strong>Historical Parallel:</strong> ${s.history}</p>`;
+            });
+
+            return narrative;
+        }
+
+        function endGame(didWin, reason = null) {
+            if (didWin && (gameState.eventHistory.length < MINIMUM_DECISIONS || sessionData.totalElapsedSeconds < MINIMUM_PLAY_TIME_SECONDS)) {
+                gameState.nationalCrisisLevel = 90; // Pull back from the brink
+                updateUI();
+                feedbackTitleEl.textContent = "The Crisis Continues...";
+                feedbackTextEl.textContent = "Though your state is stable for the moment, the confederation remains fragile. The crisis has not yet reached its peak, and more challenges lie ahead before the nation's fate is decided.";
+                feedbackConsequenceEl.innerHTML = `➡️ Pressure for Convention has been temporarily relieved.`;
+                feedbackModal.classList.remove('hidden');
+                nextEventBtn.onclick = () => {
+                    feedbackModal.classList.add('hidden');
+                    selectAndDisplayNextEvent();
+                };
+                return; // Exit the endGame function to continue playing
+            }
+
+            stopTimer();
+            endPlayerNamesEl.textContent = gameState.playerNames;
+            gameScreen.classList.add('hidden');
+            endScreen.classList.remove('hidden');
+            
+            totalTimeEl.textContent = `${String(Math.floor(sessionData.totalElapsedSeconds / 60)).padStart(2, '0')}:${String(Math.floor(sessionData.totalElapsedSeconds % 60)).padStart(2, '0')}`;
+            
+            const avgStability = (gameState.economic + gameState.social + gameState.political) / 3;
+            const finalScore = Math.round((avgStability * 10) + (gameState.eventHistory.length * 5));
+            finalScoreEl.textContent = finalScore;
+
+            if (reason === 'burnout') {
+                endGraphicContainer.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="#e67e22" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mx-auto"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3-3-3s-3 1-3 3a7 7 0 0 0-8 0c0-2-1-3-3-3s-3 1-3 3a7 7 0 0 0 7 7z"/><path d="M12 22V10"/><path d="M12 2a4 4 0 0 0-4 4v4h8V6a4 4 0 0 0-4-4z"/></svg>`;
+                endTitleEl.textContent = "Administration in Chaos!";
+                endTitleEl.classList.add('text-orange-600');
+                endMessageEl.textContent = `Your rapid-fire, chaotic decision-making has exhausted the public's patience and your political allies. Unable to govern effectively, your state has descended into paralysis.`;
+                endGameNarrativeEl.innerHTML = `<h3 class="font-title text-xl mb-2 text-center">Analysis: Governor Burnout</h3><p>Your term was a whirlwind of hasty decrees. By rushing from crisis to crisis without time for deliberation, you eroded public trust. In the fragile political climate of the 1780s, a governor's reputation for stability was everything. Your chaotic style proved as damaging as any single bad decision, showing that leadership requires not just action, but thoughtful consideration.</p>`;
+            } else if (didWin) {
+                endGameNarrativeEl.innerHTML = generateEndgameNarrative();
+                endGraphicContainer.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="#27ae60" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mx-auto"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>`;
+                endTitleEl.textContent = "You Reached the Convention!";
+                endTitleEl.classList.add('text-green-700');
+                endMessageEl.textContent = `Congratulations, Governor! You have successfully navigated your state to 1787. Your leadership through these crises has helped demonstrate the need for a stronger government, paving the way for the Constitutional Convention.`;
+            } else {
+                endGameNarrativeEl.innerHTML = generateEndgameNarrative();
+                endGraphicContainer.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mx-auto"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+                endTitleEl.textContent = "Your State has Collapsed!";
+                endTitleEl.classList.add('text-red-700');
+                let collapseReason = "";
+                if(gameState.economic <= 0) collapseReason = "economic ruin due to rampant inflation and trade wars."
+                else if (gameState.social <= 0) collapseReason = "social chaos as rebellions and civil unrest tore society apart."
+                else if (gameState.political <= 0) collapseReason = "political irrelevance and internal division."
+                endMessageEl.textContent = `Despite your efforts, your state has succumbed to ${collapseReason} The weaknesses of the Articles of Confederation proved too great to overcome.`;
+            }
+            choicesSummaryEl.innerHTML = '';
+            gameState.eventHistory.forEach(log => {
+                const li = document.createElement('li');
+                li.innerHTML = `<p class="font-semibold">On the issue of "${log.title}," you chose to "${log.choiceText}"</p><p class="text-sm italic text-blue-800 bg-blue-50 p-2 rounded mt-1">Your Justification: "${log.justification}"</p>`;
+                choicesSummaryEl.appendChild(li);
+            });
+        }
+        
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        init();
+    </script>
+</body>
+</html>
+
